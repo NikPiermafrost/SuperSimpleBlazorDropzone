@@ -22,6 +22,7 @@
     [Parameter] public EventCallback<BinaryFileTransfer> OnBinaryFileReceived { get; set; }
 
     private string _fileInputId = Guid.NewGuid().ToString();
+
     private IJSObjectReference? _module;
     private DotNetObjectReference<SimpleDropzone>? _dropzoneRef;
 
@@ -32,7 +33,7 @@
             _dropzoneRef = DotNetObjectReference.Create(this);
             _module = await JS.InvokeAsync<IJSObjectReference>("import",
             "./_content/SuperSimpleBlazorDropzone/SimpleDropzone.razor.js");
-            await JS.InvokeVoidAsync("simpleDropzone.registerDropHandler", _dropzoneRef, DropperId, ContentOutputType.ToString());
+            await _module.InvokeVoidAsync("registerDropHandler", _dropzoneRef, DropperId, ContentOutputType.ToString());
         }
     }
 
@@ -59,33 +60,33 @@
         }
     }
 
-    private void OnDragOver(DragEventArgs e)
+    private async Task OnDragOver(DragEventArgs e)
     {
-        JS.InvokeVoidAsync("simpleDropzone.setDragActive", DropperId, true, DragActiveCssClass);
+        await _module!.InvokeVoidAsync("setDragActive", DropperId, true, DragActiveCssClass);
     }
 
-    private void OnDragLeave(DragEventArgs e)
+    private async Task OnDragLeave(DragEventArgs e)
     {
-        JS.InvokeVoidAsync("simpleDropzone.setDragActive", DropperId, false, DragActiveCssClass);
+        await _module!.InvokeVoidAsync("setDragActive", DropperId, false, DragActiveCssClass);
     }
 
     private async Task ForwardFileInputClick()
     {
-        await JS.InvokeVoidAsync("simpleDropzone.clickHiddenFileInput", _fileInputId);
+        await _module!.InvokeVoidAsync("clickHiddenFileInput", _fileInputId);
     }
 
     [JSInvokable]
     public async Task ReceiveBase64Data(Base64FileTransfer fileDto)
     {
         await OnBase64FileReceived.InvokeAsync(fileDto);
-        await JS.InvokeVoidAsync("simpleDropzone.setDragActive", DropperId, false, DragActiveCssClass);
+        await _module!.InvokeVoidAsync("setDragActive", DropperId, false, DragActiveCssClass);
     }
 
     [JSInvokable]
     public async Task ReceiveBinaryData(BinaryFileTransfer fileDto)
     {
         await OnBinaryFileReceived.InvokeAsync(fileDto);
-        await JS.InvokeVoidAsync("simpleDropzone.setDragActive", DropperId, false, DragActiveCssClass);
+        await _module!.InvokeVoidAsync("setDragActive", DropperId, false, DragActiveCssClass);
     }
 
     private static RenderFragment DefaultDropContent => builder =>
@@ -100,7 +101,10 @@
         GC.SuppressFinalize(this);
         try
         {
-            await JS.InvokeVoidAsync("simpleDropzone.removeEventListeners", _dropzoneRef, DropperId);
+            if (_module != null)
+            {
+                await _module.InvokeVoidAsync("removeEventListeners", _dropzoneRef, DropperId);
+            }
         }
         finally
         {

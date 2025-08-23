@@ -8,20 +8,18 @@
     <h3>Dropzone Result:</h3>
     @if (_base64File != null)
     {
-        <div>
-            <h4>File Name: @_base64File.Name</h4>
-            <h4>File Size: @_base64File.Size</h4>
-            <h4>File Type: @_base64File.Type</h4>
-            <h4>File Extension: @_base64File.Extension</h4>
-            <h4>File Content:</h4>
-            <pre class="container-fluid" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-                @_base64File.Content
-            </pre>
-            @if (!string.IsNullOrWhiteSpace(_base64File.ImgSrc))
-            {
-                <img src="@_base64File.ImgSrc" alt="Uploaded Image" />
-            }
-        </div>
+        <h4>File Name: @_base64File.Name</h4>
+        <h4>File Size: @_base64File.Size</h4>
+        <h4>File Type: @_base64File.Type</h4>
+        <h4>File Extension: @_base64File.Extension</h4>
+        <h4>File Content:</h4>
+        <pre class="container-fluid" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+            @_base64File.Content
+        </pre>
+        @if (!string.IsNullOrWhiteSpace(_base64File.ImgSrc))
+        {
+            <img class="img-fluid" src="@_base64File.ImgSrc" alt="Uploaded Image" />
+        }
     }
 
     <h3 class="mt-4">This is to receive binary data with all css and text customization</h3>
@@ -35,22 +33,20 @@
     <h3>Dropzone Result:</h3>
     @if (_binaryFile != null)
     {
-        <div>
-            <h4>File Name: @_binaryFile.Name</h4>
-            <h4>File Size: @_binaryFile.Size</h4>
-            <h4>File Type: @_binaryFile.Type</h4>
-            <h4>File Extension: @_binaryFile.Extension</h4>
-            <h4>File Content:</h4>
-            <pre class="container-fluid" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-                @(_binaryFile.Content != null 
-                    ? BitConverter.ToString(_binaryFile.Content).Replace("-", " ") 
-                    : string.Empty)
-            </pre>
-            @if (!string.IsNullOrWhiteSpace(_binaryFile.ImgSrc))
-            {
-                <img src="@_binaryFile.ImgSrc" alt="Uploaded Image" />
-            }
-        </div>
+        <h4>File Name: @_binaryFile.Name</h4>
+        <h4>File Size: @_binaryFile.Size</h4>
+        <h4>File Type: @_binaryFile.Type</h4>
+        <h4>File Extension: @_binaryFile.Extension</h4>
+        <h4>File Content:</h4>
+        <pre class="container-fluid" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+            @(_binaryFile.Content != null 
+                ? BitConverter.ToString(_binaryFile.Content).Replace("-", " ") 
+                : string.Empty)
+        </pre>
+        @if (!string.IsNullOrWhiteSpace(_binaryFile.ImgSrc))
+        {
+            <img class="img-fluid" src="@_binaryFile.ImgSrc" alt="Uploaded Image" />
+        }
     }
 </div>
 

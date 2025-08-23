@@ -1,0 +1,15 @@
+﻿.file-dropper {
+    border: 2px dashed #aaa;
+    border-radius: 8px;
+    padding: 32px;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color 0.2s;
+    position: relative;
+    min-height: 180px;
+    background: #fafafa;
+}
+.file-dropper.drag-active {
+    border-color: #0078d7;
+    background: #e6f7ff;
+}

@@ -1,0 +1,114 @@
+﻿@using Microsoft.JSInterop
+@using SuperSimpleBlazorDropzone.Models
+@using Microsoft.AspNetCore.Components.Forms
+@using SuperSimpleBlazorDropzone.Extensions
+
+@inject IJSRuntime JS
+@implements IAsyncDisposable
+
+<div id=@DropperId class=@CssClass @ondragover=@OnDragOver @ondragleave=@OnDragLeave @ondragover:preventDefault
+    @ondragleave:preventDefault @ondrop:preventDefault @onclick=@ForwardFileInputClick tabindex="0">
+    @ChildContent
+    <InputFile id=@_fileInputId style="display:none" OnChange=@OnInputFileChange />
+</div>
+
+@code {
+    [Parameter] public string CssClass { get; set; } = "file-dropper";
+    [Parameter] public string DragActiveCssClass { get; set; } = "drag-active";
+    [Parameter] public FileContentOutput ContentOutputType { get; set; } = FileContentOutput.Base64;
+    [Parameter] public string DropperId { get; set; } = Guid.NewGuid().ToString();
+    [Parameter] public RenderFragment? ChildContent { get; set; } = DefaultDropContent;
+    [Parameter] public EventCallback<Base64FileTransfer> OnBase64FileReceived { get; set; }
+    [Parameter] public EventCallback<BinaryFileTransfer> OnBinaryFileReceived { get; set; }
+
+    private string _fileInputId = Guid.NewGuid().ToString();
+    private IJSObjectReference? _module;
+    private DotNetObjectReference<SimpleDropzone>? _dropzoneRef;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            _dropzoneRef = DotNetObjectReference.Create(this);
+            _module = await JS.InvokeAsync<IJSObjectReference>("import",
+            "./_content/SuperSimpleBlazorDropzone/SimpleDropzone.razor.js");
+            await JS.InvokeVoidAsync("simpleDropzone.registerDropHandler", _dropzoneRef, DropperId, ContentOutputType.ToString());
+        }
+    }
+
+    private async Task OnInputFileChange(InputFileChangeEventArgs e)
+    {
+        switch (ContentOutputType)
+        {
+            case FileContentOutput.Base64:
+                var base64File = await e.File.RequestBase64FileTransferAsync();
+                if (OnBase64FileReceived.HasDelegate)
+                {
+                    await OnBase64FileReceived.InvokeAsync(base64File);
+                }
+                break;
+            case FileContentOutput.Binary:
+                var binaryFile = await e.File.RequestBinaryFileTransferAsync();
+                if (OnBinaryFileReceived.HasDelegate)
+                {
+                    await OnBinaryFileReceived.InvokeAsync(binaryFile);
+                }
+                break;
+            default:
+                throw new ArgumentOutOfRangeException();
+        }
+    }
+
+    private void OnDragOver(DragEventArgs e)
+    {
+        JS.InvokeVoidAsync("simpleDropzone.setDragActive", DropperId, true, DragActiveCssClass);
+    }
+
+    private void OnDragLeave(DragEventArgs e)
+    {
+        JS.InvokeVoidAsync("simpleDropzone.setDragActive", DropperId, false, DragActiveCssClass);
+    }
+
+    private async Task ForwardFileInputClick()
+    {
+        await JS.InvokeVoidAsync("simpleDropzone.clickHiddenFileInput", _fileInputId);
+    }
+
+    [JSInvokable]
+    public async Task ReceiveBase64Data(Base64FileTransfer fileDto)
+    {
+        await OnBase64FileReceived.InvokeAsync(fileDto);
+        await JS.InvokeVoidAsync("simpleDropzone.setDragActive", DropperId, false, DragActiveCssClass);
+    }
+
+    [JSInvokable]
+    public async Task ReceiveBinaryData(BinaryFileTransfer fileDto)
+    {
+        await OnBinaryFileReceived.InvokeAsync(fileDto);
+        await JS.InvokeVoidAsync("simpleDropzone.setDragActive", DropperId, false, DragActiveCssClass);
+    }
+
+    private static RenderFragment DefaultDropContent => builder =>
+    {
+        builder.OpenElement(0, "span");
+        builder.AddContent(1, "Drop a file here or click to select");
+        builder.CloseElement();
+    };
+
+    public async ValueTask DisposeAsync()
+    {
+        GC.SuppressFinalize(this);
+        try
+        {
+            await JS.InvokeVoidAsync("simpleDropzone.removeEventListeners", _dropzoneRef, DropperId);
+        }
+        finally
+        {
+            if (_module != null)
+            {
+                await _module.DisposeAsync();
+            }
+            _dropzoneRef?.Dispose();
+        }
+    }
+}

@@ -1,0 +1,70 @@
+﻿@page "/"
+
+<PageTitle>Home</PageTitle>
+
+<div class="container-fluid w-100">
+    <h3>This is to receive base64 encoded data</h3>
+    <SimpleDropzone OnBase64FileReceived=@OnBase64FileReceived />
+    <h3>Dropzone Result:</h3>
+    @if (_base64File != null)
+    {
+        <div>
+            <h4>File Name: @_base64File.Name</h4>
+            <h4>File Size: @_base64File.Size</h4>
+            <h4>File Type: @_base64File.Type</h4>
+            <h4>File Extension: @_base64File.Extension</h4>
+            <h4>File Content:</h4>
+            <pre class="container-fluid" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                @_base64File.Content
+            </pre>
+            @if (!string.IsNullOrWhiteSpace(_base64File.ImgSrc))
+            {
+                <img src="@_base64File.ImgSrc" alt="Uploaded Image" />
+            }
+        </div>
+    }
+
+    <h3 class="mt-4">This is to receive binary data with all css and text customization</h3>
+    <SimpleDropzone
+        CssClass="custom"
+        DragActiveCssClass="custom-drag-active"
+        ContentOutputType=@FileContentOutput.Binary 
+        OnBinaryFileReceived=@OnBinaryFileReceived >
+        <pre>As you can see, this is some customized content for binary files. Please drop here to see it working</pre>
+    </SimpleDropzone>
+    <h3>Dropzone Result:</h3>
+    @if (_binaryFile != null)
+    {
+        <div>
+            <h4>File Name: @_binaryFile.Name</h4>
+            <h4>File Size: @_binaryFile.Size</h4>
+            <h4>File Type: @_binaryFile.Type</h4>
+            <h4>File Extension: @_binaryFile.Extension</h4>
+            <h4>File Content:</h4>
+            <pre class="container-fluid" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                @(_binaryFile.Content != null 
+                    ? BitConverter.ToString(_binaryFile.Content).Replace("-", " ") 
+                    : string.Empty)
+            </pre>
+            @if (!string.IsNullOrWhiteSpace(_binaryFile.ImgSrc))
+            {
+                <img src="@_binaryFile.ImgSrc" alt="Uploaded Image" />
+            }
+        </div>
+    }
+</div>
+
+@code {
+    private Base64FileTransfer? _base64File;
+    private BinaryFileTransfer? _binaryFile;
+
+    private void OnBase64FileReceived(Base64FileTransfer file)
+    {
+        _base64File = file;
+    }
+
+    private void OnBinaryFileReceived(BinaryFileTransfer file)
+    {
+        _binaryFile = file;
+    }
+}

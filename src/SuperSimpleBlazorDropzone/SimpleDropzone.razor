@@ -33,7 +33,7 @@
             _dropzoneRef = DotNetObjectReference.Create(this);
             _module = await JS.InvokeAsync<IJSObjectReference>("import",
             "./_content/SuperSimpleBlazorDropzone/SimpleDropzone.razor.js");
-            await _module.InvokeVoidAsync("registerDropHandler", _dropzoneRef, DropperId, ContentOutputType.ToString());
+            await _module.InvokeVoidAsync("registerDropHandler", _dropzoneRef, DropperId);
         }
     }
 
@@ -76,16 +76,27 @@
     }
 
     [JSInvokable]
-    public async Task ReceiveBase64Data(Base64FileTransfer fileDto)
-    {
-        await OnBase64FileReceived.InvokeAsync(fileDto);
-        await _module!.InvokeVoidAsync("setDragActive", DropperId, false, DragActiveCssClass);
-    }
-
-    [JSInvokable]
     public async Task ReceiveBinaryData(BinaryFileTransfer fileDto)
     {
-        await OnBinaryFileReceived.InvokeAsync(fileDto);
+        switch (ContentOutputType)
+        {
+            case FileContentOutput.Base64:
+                var base64Dto =  new Base64FileTransfer
+                {
+                    Name = fileDto.Name,
+                    Extension = fileDto.Extension,
+                    Type = fileDto.Type,
+                    Size = fileDto.Size,
+                    Content = Convert.ToBase64String(fileDto.Content)
+                };
+                await OnBase64FileReceived.InvokeAsync(base64Dto);
+                break;
+            case FileContentOutput.Binary:
+                await OnBinaryFileReceived.InvokeAsync(fileDto);
+                break;
+            default:
+                throw new ArgumentOutOfRangeException();
+        }
         await _module!.InvokeVoidAsync("setDragActive", DropperId, false, DragActiveCssClass);
     }
 

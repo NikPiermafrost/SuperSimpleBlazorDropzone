@@ -10,6 +10,7 @@ Super Simple Blazor Dropzone is a lightweight and easy-to-use file dropzone comp
 - Supports .NET 8 and .NET 9
 - Supports both base64 and binary file transfer
 - JavaScript interop for drag-and-drop and file selection
+- Supports multiple file uploads
 
 ## Installation
 
@@ -23,48 +24,64 @@ dotnet add package SuperSimpleBlazorDropzone
 
 Use the `SimpleDropzone` component in your Blazor pages or components:
 
-```razor
+```csharp
 @using SuperSimpleBlazorDropzone
-@rendermode InteractiveAuto
 
-<SimpleDropzone OnBase64FileReceived="@OnBase64FileReceived" />
+<SimpleDropzone OnBase64FilesReceived="@OnBase64FilesReceived" />
 
 @code {
     private Base64FileTransfer? _base64File;
 
-    private void OnBase64FileReceived(Base64FileTransfer file)
+    private void OnBase64FilesReceived(IEnumerable<Base64FileTransfer> files)
     {
-        _base64File = file;
+        _base64File = files.FirstOrDefault();
     }
 }
 ```
 
 ### Customizing Content and Output
 
-You can customize the dropzone's appearance and output type. For example, to receive binary data and use custom CSS/content:
+You can customize the dropzone's appearance, output type, and content. For example, to receive binary data and use custom CSS/content:
 
-```razor
+```csharp
 <SimpleDropzone
     CssClass="custom"
     DragActiveCssClass="custom-drag-active"
     ContentOutputType="@FileContentOutput.Binary"
-    OnBinaryFileReceived="@OnBinaryFileReceived">
-    <pre>As you can see, this is some customized content for binary files. Please drop here to see it working</pre>
+    OnBinaryFilesReceived="@OnBinaryFilesReceived">
+    <span>As you can see, this is some customized content for binary files. Please drop here to see it working</span>
 </SimpleDropzone>
 
 @code {
     private BinaryFileTransfer? _binaryFile;
 
-    private void OnBinaryFileReceived(BinaryFileTransfer file)
+    private void OnBinaryFilesReceived(IEnumerable<BinaryFileTransfer> files)
     {
-        _binaryFile = file;
+        _binaryFile = files.FirstOrDefault();
+    }
+}
+```
+
+### Multiple File Uploads
+
+Enable multiple file uploads by setting `AllowMultipleFiles="true"`:
+
+```csharp
+<SimpleDropzone AllowMultipleFiles="true" OnBase64FilesReceived="@OnMultipleFilesReceived" />
+
+@code {
+    private List<Base64FileTransfer> _multipleFiles = new();
+
+    private void OnMultipleFilesReceived(IEnumerable<Base64FileTransfer> files)
+    {
+        _multipleFiles = files.ToList();
     }
 }
 ```
 
 ### Example Output Rendering
 
-```razor
+```csharp
 @if (_binaryFile != null)
 {
     <div>
@@ -93,8 +110,9 @@ You can customize the dropzone's appearance and output type. For example, to rec
 - `ContentOutputType` (`FileContentOutput`): Determines the format of the file content received (`Base64` or `Binary`). Default is `Base64`.
 - `DropperId` (`string`): The unique ID for the dropzone element. Defaults to a new GUID.
 - `ChildContent` (`RenderFragment?`): Custom content to render inside the dropzone. If not provided, a default message is shown.
-- `OnBase64FileReceived` (`EventCallback<Base64FileTransfer>`): Callback invoked when a file is received as base64 data.
-- `OnBinaryFileReceived` (`EventCallback<BinaryFileTransfer>`): Callback invoked when a file is received as binary data.
+- `OnBase64FilesReceived` (`EventCallback<IEnumerable<Base64FileTransfer>>`): Callback invoked when one or more files are received as base64 data.
+- `OnBinaryFilesReceived` (`EventCallback<IEnumerable<BinaryFileTransfer>>`): Callback invoked when one or more files are received as binary data.
+- `AllowMultipleFiles` (`bool`): If `true`, allows multiple file selection and drag-and-drop. Default is `false`.
 
 ## Styling
 

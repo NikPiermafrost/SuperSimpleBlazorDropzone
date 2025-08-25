@@ -9,7 +9,7 @@
 <div id=@DropperId class=@CssClass @ondragover=@OnDragOver @ondragleave=@OnDragLeave @ondragover:preventDefault
     @ondragleave:preventDefault @ondrop:preventDefault @onclick=@ForwardFileInputClick tabindex="0">
     @ChildContent
-    <InputFile id=@_fileInputId style="display:none" OnChange=@OnInputFileChange />
+    <InputFile id=@_fileInputId style="display:none" OnChange=@OnInputFileChange multiple=@AllowMultipleFiles />
 </div>
 
 @code {
@@ -18,8 +18,9 @@
     [Parameter] public FileContentOutput ContentOutputType { get; set; } = FileContentOutput.Base64;
     [Parameter] public string DropperId { get; set; } = Guid.NewGuid().ToString();
     [Parameter] public RenderFragment? ChildContent { get; set; } = DefaultDropContent;
-    [Parameter] public EventCallback<Base64FileTransfer> OnBase64FileReceived { get; set; }
-    [Parameter] public EventCallback<BinaryFileTransfer> OnBinaryFileReceived { get; set; }
+    [Parameter] public EventCallback<IEnumerable<Base64FileTransfer>> OnBase64FilesReceived { get; set; }
+    [Parameter] public EventCallback<IEnumerable<BinaryFileTransfer>> OnBinaryFilesReceived { get; set; }
+    [Parameter] public bool AllowMultipleFiles { get; set; } = false;
 
     private string _fileInputId = Guid.NewGuid().ToString();
 
@@ -33,28 +34,55 @@
             _dropzoneRef = DotNetObjectReference.Create(this);
             _module = await JS.InvokeAsync<IJSObjectReference>("import",
             "./_content/SuperSimpleBlazorDropzone/SimpleDropzone.razor.js");
-            await _module.InvokeVoidAsync("registerDropHandler", _dropzoneRef, DropperId);
+            await _module.InvokeVoidAsync("registerDropHandler", _dropzoneRef, DropperId, AllowMultipleFiles);
         }
     }
 
     private async Task OnInputFileChange(InputFileChangeEventArgs e)
     {
+        if (!AllowMultipleFiles) 
+        {
+            switch (ContentOutputType)
+            {
+                case FileContentOutput.Base64:
+                    var base64File = await e.File.RequestBase64FileTransferAsync();
+                    if (OnBase64FilesReceived.HasDelegate)
+                    {
+                        await OnBase64FilesReceived.InvokeAsync([base64File]);
+                    }
+                    return;
+                case FileContentOutput.Binary:
+                    var binaryFile = await e.File.RequestBinaryFileTransferAsync();
+                    if (OnBinaryFilesReceived.HasDelegate)
+                    {
+                        await OnBinaryFilesReceived.InvokeAsync([binaryFile]);
+                    }
+                    return;
+                default:
+                    throw new ArgumentOutOfRangeException();
+            }
+        }
+        var files = e.GetMultipleFiles();
         switch (ContentOutputType)
         {
             case FileContentOutput.Base64:
-                var base64File = await e.File.RequestBase64FileTransferAsync();
-                if (OnBase64FileReceived.HasDelegate)
+                var base64Files = new List<Base64FileTransfer>();
+                foreach (var file in files)
                 {
-                    await OnBase64FileReceived.InvokeAsync(base64File);
+                    var base64File = await file.RequestBase64FileTransferAsync();
+                    base64Files.Add(base64File);
                 }
-                break;
+                await OnBase64FilesReceived.InvokeAsync(base64Files);
+                return;
             case FileContentOutput.Binary:
-                var binaryFile = await e.File.RequestBinaryFileTransferAsync();
-                if (OnBinaryFileReceived.HasDelegate)
+                var binaryFiles = new List<BinaryFileTransfer>();
+                foreach (var file in files)
                 {
-                    await OnBinaryFileReceived.InvokeAsync(binaryFile);
+                    var binaryFile = await file.RequestBinaryFileTransferAsync();
+                    binaryFiles.Add(binaryFile);
                 }
-                break;
+                await OnBinaryFilesReceived.InvokeAsync(binaryFiles);
+                return;
             default:
                 throw new ArgumentOutOfRangeException();
         }
@@ -76,23 +104,23 @@
     }
 
     [JSInvokable]
-    public async Task ReceiveBinaryData(BinaryFileTransfer fileDto)
+    public async Task ReceiveBinaryData(BinaryFileTransfer[] files)
     {
         switch (ContentOutputType)
         {
             case FileContentOutput.Base64:
-                var base64Dto =  new Base64FileTransfer
+                var convertedFiles = files.Select(f => new Base64FileTransfer
                 {
-                    Name = fileDto.Name,
-                    Extension = fileDto.Extension,
-                    Type = fileDto.Type,
-                    Size = fileDto.Size,
-                    Content = Convert.ToBase64String(fileDto.Content)
-                };
-                await OnBase64FileReceived.InvokeAsync(base64Dto);
+                    Name = f.Name,
+                    Extension = f.Extension,
+                    Type = f.Type,
+                    Size = f.Size,
+                    Content = Convert.ToBase64String(f.Content)
+                }).ToArray();
+                await OnBase64FilesReceived.InvokeAsync(convertedFiles);
                 break;
             case FileContentOutput.Binary:
-                await OnBinaryFileReceived.InvokeAsync(fileDto);
+                await OnBinaryFilesReceived.InvokeAsync(files);
                 break;
             default:
                 throw new ArgumentOutOfRangeException();
@@ -114,7 +142,7 @@
         {
             if (_module != null)
             {
-                await _module.InvokeVoidAsync("removeEventListeners", _dropzoneRef, DropperId);
+                await _module.InvokeVoidAsync("removeEventListeners", _dropzoneRef, DropperId, AllowMultipleFiles);
             }
         }
         finally

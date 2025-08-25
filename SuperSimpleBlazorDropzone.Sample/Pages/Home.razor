@@ -4,7 +4,7 @@
 
 <div class="container-fluid w-100">
     <h3>This is to receive base64 encoded data</h3>
-    <SimpleDropzone OnBase64FileReceived=@OnBase64FileReceived />
+    <SimpleDropzone OnBase64FilesReceived=@OnBase64FilesReceived />
     <h3>Dropzone Result:</h3>
     @if (_base64File != null)
     {
@@ -27,7 +27,7 @@
         CssClass="custom"
         DragActiveCssClass="custom-drag-active"
         ContentOutputType=@FileContentOutput.Binary 
-        OnBinaryFileReceived=@OnBinaryFileReceived >
+        OnBinaryFilesReceived=@OnBinaryFilesReceived >
         <span>As you can see, this is some customized content for binary files. Please drop here to see it working</span>
     </SimpleDropzone>
     <h3>Dropzone Result:</h3>
@@ -48,19 +48,68 @@
             <img class="img-fluid" src="@_binaryFile.ImgSrc" alt="Uploaded Image" />
         }
     }
+
+    <h3 class="mt-4">This is to receive multiple files</h3>
+    <SimpleDropzone AllowMultipleFiles=true OnBase64FilesReceived=@OnMultipleFilesReceived />
+    <h3>Dropzone Result:</h3>
+    @if (_multipleFiles.Any())
+    {
+        <div class="w-100" style="overflow-x: auto">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>File Name</th>
+                        <th>File Size</th>
+                        <th>File Type</th>
+                        <th>File Extension</th>
+                        <th>File Content (first 100 bytes)</th>
+                        <th>Image Preview</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var file in _multipleFiles)
+                    {
+                        <tr>
+                            <td>@file.Name</td>
+                            <td>@file.Size</td>
+                            <td>@file.Type</td>
+                            <td>@file.Extension</td>
+                            <td>
+                                <pre style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                                    @file.Content.Substring(0, 30)
+                                </pre>
+                            </td>
+                            <td>
+                                @if (!string.IsNullOrWhiteSpace(file.ImgSrc))
+                                {
+                                    <span>It is an image, file.ImgSrc is populated</span>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
 </div>
 
 @code {
     private Base64FileTransfer? _base64File;
     private BinaryFileTransfer? _binaryFile;
+    private List<Base64FileTransfer> _multipleFiles = new();
 
-    private void OnBase64FileReceived(Base64FileTransfer file)
+    private void OnBase64FilesReceived(IEnumerable<Base64FileTransfer> files)
     {
-        _base64File = file;
+        _base64File = files.FirstOrDefault();
     }
 
-    private void OnBinaryFileReceived(BinaryFileTransfer file)
+    private void OnBinaryFilesReceived(IEnumerable<BinaryFileTransfer> files)
     {
-        _binaryFile = file;
+        _binaryFile = files.FirstOrDefault();
+    }
+
+    private void OnMultipleFilesReceived(IEnumerable<Base64FileTransfer> files)
+    {
+        _multipleFiles.AddRange(files);
     }
 }

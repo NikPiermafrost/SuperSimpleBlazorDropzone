@@ -5,12 +5,17 @@ export const setDragActive = (elementId, active, cssClass) => {
         else dropper.classList.remove(cssClass);
     }
 }
-export const handleDrop = async (dotNetRef, event) => {
+export const handleDrop = async (dotNetRef, event, allowMultiple) => {
     event.preventDefault();
     setDragActive(false);
     const files = event.dataTransfer.files;
-    if (files.length > 0) {
-        const file = files[0];
+    if (files.length < 1) {
+        window.alert('No files were dropped.');
+        return;
+    }
+    const result = [];
+    let actualFiles = allowMultiple ? files : [files[0]];
+    for (const file of actualFiles) {
         const blob = new Uint8Array(await file.arrayBuffer());
         const data = {
             name: file.name,
@@ -19,14 +24,15 @@ export const handleDrop = async (dotNetRef, event) => {
             size: file.size,
             content: blob
         };
-        dotNetRef.invokeMethodAsync('ReceiveBinaryData', data);
+        result.push(data);
     }
+    dotNetRef.invokeMethodAsync('ReceiveBinaryData', result);
 }
-export const registerDropHandler = (dotNetRef, elementId) => {
-    document.getElementById(elementId)?.addEventListener('drop', dropEventListener(dotNetRef));
+export const registerDropHandler = (dotNetRef, elementId, allowMultiple) => {
+    document.getElementById(elementId)?.addEventListener('drop', dropEventListener(dotNetRef, allowMultiple));
 }
-export const removeEventListeners = (dotNetRef, elementId) => {
-    document.getElementById(elementId)?.removeEventListener('drop', dropEventListener(dotNetRef));
+export const removeEventListeners = (dotNetRef, elementId, allowMultiple) => {
+    document.getElementById(elementId)?.removeEventListener('drop', dropEventListener(dotNetRef, allowMultiple));
 }
 export const clickHiddenFileInput = (fileInputId) => {
     const input = document.getElementById(fileInputId);
@@ -36,5 +42,5 @@ export const clickHiddenFileInput = (fileInputId) => {
         input.dispatchEvent(evt);
     }
 }
-export const dropEventListener = (dotNetRef) => 
-    (e) => handleDrop(dotNetRef, e);
+export const dropEventListener = (dotNetRef, allowMultiple) =>
+    (e) => handleDrop(dotNetRef, e, allowMultiple);

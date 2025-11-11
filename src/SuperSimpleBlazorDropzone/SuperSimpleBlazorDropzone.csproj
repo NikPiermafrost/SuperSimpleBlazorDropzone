@@ -3,7 +3,7 @@
   <PropertyGroup>
     <Title>Super Simple Blazor Dropzone</Title>
     <PackageId>SuperSimpleBlazorDropzone</PackageId>
-    <PackageVersion>1.1.0</PackageVersion>
+    <PackageVersion>1.2.0</PackageVersion>
     <Authors>Nicola Piermattei</Authors>
     <PackageTags>blazor;dropzone;simple;file;upload</PackageTags>
     <PackageProjectUrl>https://github.com/NikPiermafrost/SuperSimpleBlazorDropzone</PackageProjectUrl>
@@ -16,7 +16,7 @@
   </PropertyGroup>
 
   <PropertyGroup>
-    <TargetFrameworks>net8.0;net9.0</TargetFrameworks>
+    <TargetFrameworks>net8.0;net9.0;net10.0</TargetFrameworks>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
@@ -32,6 +32,10 @@
 
   <ItemGroup Condition="'$(TargetFramework)' == 'net9.0'">
     <PackageReference Include="Microsoft.AspNetCore.Components.Web" Version="9.0.*" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(TargetFramework)' == 'net10.0'">
+    <PackageReference Include="Microsoft.AspNetCore.Components.Web" Version="10.0.*" />
   </ItemGroup>
 
   <ItemGroup>

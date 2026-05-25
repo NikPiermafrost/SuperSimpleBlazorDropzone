@@ -31,7 +31,7 @@ jobs:
       # Checkout the code
       - uses: actions/checkout@v2
 
-      # Install .NET 8.0 SDK
+      # Install .NET 10.0 SDK
       - name: Setup .NET 8 preview
         uses: actions/setup-dotnet@v1
         with:

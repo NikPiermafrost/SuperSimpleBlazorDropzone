@@ -7,7 +7,7 @@ Super Simple Blazor Dropzone is a lightweight and easy-to-use file dropzone comp
 - Simple and intuitive API
 - Lightweight and fast
 - Customizable with CSS classes and content
-- Supports .NET 8 and .NET 9
+- Supports .NET 8, .NET 9 and .NET 10
 - Supports both base64 and binary file transfer
 - JavaScript interop for drag-and-drop and file selection
 - Supports multiple file uploads
@@ -79,6 +79,36 @@ Enable multiple file uploads by setting `AllowMultipleFiles="true"`:
 }
 ```
 
+### Processing Indicator
+
+Use `OnProcessingChanged` to show a spinner or loading indicator while files are being read:
+
+```csharp
+<SimpleDropzone
+    OnBase64FilesReceived="@OnBase64FilesReceived"
+    OnProcessingChanged="@OnProcessingChanged" />
+
+@if (_isProcessing)
+{
+    <p>Processing files...</p>
+}
+
+@code {
+    private bool _isProcessing;
+    private List<Base64FileTransfer> _files = new();
+
+    private void OnBase64FilesReceived(IEnumerable<Base64FileTransfer> files)
+    {
+        _files = files.ToList();
+    }
+
+    private void OnProcessingChanged(bool processing)
+    {
+        _isProcessing = processing;
+    }
+}
+```
+
 ### Example Output Rendering
 
 ```csharp
@@ -113,6 +143,9 @@ Enable multiple file uploads by setting `AllowMultipleFiles="true"`:
 - `OnBase64FilesReceived` (`EventCallback<IEnumerable<Base64FileTransfer>>`): Callback invoked when one or more files are received as base64 data.
 - `OnBinaryFilesReceived` (`EventCallback<IEnumerable<BinaryFileTransfer>>`): Callback invoked when one or more files are received as binary data.
 - `AllowMultipleFiles` (`bool`): If `true`, allows multiple file selection and drag-and-drop. Default is `false`.
+- `MaxFileSize` (`long?`): Maximum file size in bytes. Default is 50MB. Files exceeding this limit are skipped.
+- `AcceptedFileTypes` (`string?`): Comma-separated file type filter (e.g. `".jpg,.png"` or `"image/*"`), passed to the underlying `<input accept="...">`.
+- `OnProcessingChanged` (`EventCallback<bool>`): Callback invoked with `true` when file processing starts and `false` when complete. Useful for showing a spinner.
 
 ## Styling
 

@@ -1,3 +1,5 @@
+const _dropListeners = new Map();
+
 export const setDragActive = (elementId, active, cssClass) => {
     const dropper = document.getElementById(elementId);
     if (dropper) {
@@ -5,42 +7,57 @@ export const setDragActive = (elementId, active, cssClass) => {
         else dropper.classList.remove(cssClass);
     }
 }
-export const handleDrop = async (dotNetRef, event, allowMultiple) => {
+
+export const handleDrop = async (dotNetRef, event, allowMultiple, maxFileSize, dragActiveCssClass) => {
     event.preventDefault();
-    setDragActive(false);
+    const elementId = event.currentTarget.id;
+    setDragActive(elementId, false, dragActiveCssClass);
     const files = event.dataTransfer.files;
-    if (files.length < 1) {
-        window.alert('No files were dropped.');
-        return;
-    }
+    if (files.length < 1) return;
+
+    const actualFiles = allowMultiple ? files : [files[0]];
     const result = [];
-    let actualFiles = allowMultiple ? files : [files[0]];
+
     for (const file of actualFiles) {
-        const blob = new Uint8Array(await file.arrayBuffer());
-        const data = {
+        if (maxFileSize && file.size > maxFileSize) continue;
+        const buffer = new Uint8Array(await file.arrayBuffer());
+        result.push({
             name: file.name,
-            extension: file.name.split('.').pop(),
+            extension: file.name.includes('.') ? file.name.split('.').pop() : '',
             type: file.type,
             size: file.size,
-            content: blob
-        };
-        result.push(data);
+            content: buffer
+        });
     }
+
+    if (result.length === 0) return;
     dotNetRef.invokeMethodAsync('ReceiveBinaryData', result);
 }
-export const registerDropHandler = (dotNetRef, elementId, allowMultiple) => {
-    document.getElementById(elementId)?.addEventListener('drop', dropEventListener(dotNetRef, allowMultiple));
+
+export const registerDropHandler = (dotNetRef, elementId, allowMultiple, maxFileSize, dragActiveCssClass) => {
+    const dropper = document.getElementById(elementId);
+    if (!dropper) return;
+
+    const listener = (e) => handleDrop(dotNetRef, e, allowMultiple, maxFileSize, dragActiveCssClass);
+    _dropListeners.set(elementId, listener);
+    dropper.addEventListener('drop', listener);
 }
+
 export const removeEventListeners = (dotNetRef, elementId, allowMultiple) => {
-    document.getElementById(elementId)?.removeEventListener('drop', dropEventListener(dotNetRef, allowMultiple));
+    const dropper = document.getElementById(elementId);
+    if (!dropper) return;
+
+    const listener = _dropListeners.get(elementId);
+    if (listener) {
+        dropper.removeEventListener('drop', listener);
+        _dropListeners.delete(elementId);
+    }
 }
+
 export const clickHiddenFileInput = (fileInputId) => {
     const input = document.getElementById(fileInputId);
-    // this doesn't trigger blazor event dispatching, causing a loop
     if (input) {
         const evt = new MouseEvent('click', { bubbles: false, cancelable: true, view: window });
         input.dispatchEvent(evt);
     }
 }
-export const dropEventListener = (dotNetRef, allowMultiple) =>
-    (e) => handleDrop(dotNetRef, e, allowMultiple);

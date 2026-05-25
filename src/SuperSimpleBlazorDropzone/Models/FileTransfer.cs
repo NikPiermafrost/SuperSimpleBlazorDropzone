@@ -13,11 +13,17 @@ public class FileTransfer
 public class Base64FileTransfer : FileTransfer
 {
     public string Content { get; set; } = default!;
-    public string? ImgSrc => Type.StartsWith("image", StringComparison.OrdinalIgnoreCase) ? $"data:{Type};base64,{Content}" : null;
+    private string? _imgSrc;
+    public string? ImgSrc => Type.StartsWith("image", StringComparison.OrdinalIgnoreCase)
+        ? (_imgSrc ??= $"data:{Type};base64,{Content}")
+        : null;
 }
 
 public class BinaryFileTransfer : FileTransfer
 {
     public byte[] Content { get; set; } = default!;
-    public string? ImgSrc => Type.StartsWith("image", StringComparison.OrdinalIgnoreCase) ? $"data:{Type};base64,{Convert.ToBase64String(Content)}" : null;
+    private string? _imgSrc;
+    public string? ImgSrc => Type.StartsWith("image", StringComparison.OrdinalIgnoreCase)
+        ? (_imgSrc ??= $"data:{Type};base64,{Convert.ToBase64String(Content)}")
+        : null;
 }

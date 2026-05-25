@@ -3,7 +3,7 @@
   <PropertyGroup>
     <Title>Super Simple Blazor Dropzone</Title>
     <PackageId>SuperSimpleBlazorDropzone</PackageId>
-    <PackageVersion>1.2.0</PackageVersion>
+    <PackageVersion>1.3.0</PackageVersion>
     <Authors>Nicola Piermattei</Authors>
     <PackageTags>blazor;dropzone;simple;file;upload</PackageTags>
     <PackageProjectUrl>https://github.com/NikPiermafrost/SuperSimpleBlazorDropzone</PackageProjectUrl>

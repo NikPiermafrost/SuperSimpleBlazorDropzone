@@ -4,6 +4,20 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.0] - 2026-05-25
+- Added `OnProcessingChanged` (`EventCallback<bool>`) — signals file processing start/end for spinner integration
+- Fixed JS `removeEventListener` not matching (listener leak) — `_dropListeners` Map stores stable refs
+- Fixed `DragActiveCssClass` not cleaned on drop — now passed to JS handler
+- Removed hardcoded `window.alert` on empty drop
+- Removed `GC.SuppressFinalize(this)` (no finalizer needed)
+- Deduplicated `OnInputFileChange` — unified single/multi-file path
+- Added `catch JSDisconnectedException` in `DisposeAsync` for Blazor Server safety
+- Added `MaxFileSize` parameter (nullable, default 50MB)
+- Added `AcceptedFileTypes` parameter (maps to `<input accept="...">`)
+- Added `maxAllowedSize` in `OpenReadStream(maxSize)` — OOM prevention
+- Added `await using` for stream disposal in extensions
+- Added lazy cache for `ImgSrc` property — skips repeated base64 re-encode
+
 ## [1.2.0] - 2025-11-11
 - Added support to net10.0
 

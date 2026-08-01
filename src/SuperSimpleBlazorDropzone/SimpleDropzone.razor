@@ -101,28 +101,51 @@
     }
 
     [JSInvokable]
-    public async Task ReceiveBinaryData(BinaryFileTransfer[] files)
+    public async Task ReceiveData(IJSStreamReference streamReference, string name, string type, long size)
     {
+        if (MaxFileSize.HasValue && size > MaxFileSize.Value)
+        {
+            return;
+        }
         if (OnProcessingChanged.HasDelegate)
+        {
             await OnProcessingChanged.InvokeAsync(true);
-
+        }
         try
         {
+            var maxAllowedSize = MaxFileSize ?? long.MaxValue;
+            await using var stream = await streamReference.OpenReadStreamAsync(maxAllowedSize: maxAllowedSize);
+            await using var memoryStream = new MemoryStream();
+            await stream.CopyToAsync(memoryStream);
+            var buffer = memoryStream.ToArray();
+            var extension = name.Contains('.') ? name.Split('.').Last() : "";
             switch (ContentOutputType)
             {
                 case FileContentOutput.Base64:
-                    var convertedFiles = files.Select(f => new Base64FileTransfer
+                    await OnBase64FilesReceived.InvokeAsync(new[]
                     {
-                        Name = f.Name,
-                        Extension = f.Extension,
-                        Type = f.Type,
-                        Size = f.Size,
-                        Content = Convert.ToBase64String(f.Content)
-                    }).ToArray();
-                    await OnBase64FilesReceived.InvokeAsync(convertedFiles);
+                        new Base64FileTransfer
+                        {
+                            Name = name,
+                            Extension = extension,
+                            Type = type,
+                            Size = size,
+                            Content = Convert.ToBase64String(buffer)
+                        }
+                    });
                     break;
                 case FileContentOutput.Binary:
-                    await OnBinaryFilesReceived.InvokeAsync(files);
+                    await OnBinaryFilesReceived.InvokeAsync(new[]
+                    {
+                        new BinaryFileTransfer
+                        {
+                            Name = name,
+                            Extension = extension,
+                            Type = type,
+                            Size = size,
+                            Content = buffer
+                        }
+                    });
                     break;
                 default:
                     throw new ArgumentOutOfRangeException();
@@ -131,7 +154,9 @@
         finally
         {
             if (OnProcessingChanged.HasDelegate)
+            {
                 await OnProcessingChanged.InvokeAsync(false);
+            }
         }
         await _module!.InvokeVoidAsync("setDragActive", DropperId, false, DragActiveCssClass);
     }

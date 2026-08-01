@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.0] - 2026-08-01
+- Drag-and-drop now streams files from JS to .NET via JS interop streaming (`IJSStreamReference` + `OpenReadStreamAsync`) instead of sending the whole file in a single SignalR interop message
+- Fixes the 32 KB `MaximumReceiveMessageSize` failure on Blazor Server when dropping files
+- `MaxFileSize` is now also enforced server-side on the drop path (not only client-side)
+- Drop path now raises one `OnBase64FilesReceived`/`OnBinaryFilesReceived` event per file (previously one event per drop batch)
+
 ## [1.3.0] - 2026-05-25
 - Added `OnProcessingChanged` (`EventCallback<bool>`) — signals file processing start/end for spinner integration
 - Fixed JS `removeEventListener` not matching (listener leak) — `_dropListeners` Map stores stable refs

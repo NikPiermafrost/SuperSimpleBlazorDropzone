@@ -16,22 +16,11 @@ export const handleDrop = async (dotNetRef, event, allowMultiple, maxFileSize, d
     if (files.length < 1) return;
 
     const actualFiles = allowMultiple ? files : [files[0]];
-    const result = [];
 
     for (const file of actualFiles) {
         if (maxFileSize && file.size > maxFileSize) continue;
-        const buffer = new Uint8Array(await file.arrayBuffer());
-        result.push({
-            name: file.name,
-            extension: file.name.includes('.') ? file.name.split('.').pop() : '',
-            type: file.type,
-            size: file.size,
-            content: buffer
-        });
+        await dotNetRef.invokeMethodAsync('ReceiveData', DotNet.createJSStreamReference(file), file.name, file.type, file.size);
     }
-
-    if (result.length === 0) return;
-    dotNetRef.invokeMethodAsync('ReceiveBinaryData', result);
 }
 
 export const registerDropHandler = (dotNetRef, elementId, allowMultiple, maxFileSize, dragActiveCssClass) => {

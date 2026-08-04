@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.5.0] - 2026-08-04
+- Fixed click-to-select not opening the file picker on Safari for iOS/iPadOS (and any other WebKit-based browser on those platforms)
+- The picker is now opened synchronously from a native JS `click` listener calling `input.click()` directly, instead of routing the click through an async .NET handler and JS interop round trip — WebKit had already discarded the transient user activation by the time the old call landed
+- Replaced the synthetic `new MouseEvent('click')` dispatch with a real `input.click()` call — WebKit refuses to open a file picker from an untrusted event
+- The hidden `InputFile` is no longer `display:none`; it is visually hidden but still rendered, since WebKit ignores clicks targeting non-rendered file inputs
+- Click listener is registered in `registerDropHandler` and cleaned up in `removeEventListeners` alongside the drop listener, with a guard preventing recursive picker re-entry
+- Note: the dropzone element requires `cursor: pointer` for taps to register on iOS. The default `.file-dropper` class sets this; a custom `CssClass` must set it too
+
 ## [1.4.0] - 2026-08-01
 - Drag-and-drop now streams files from JS to .NET via JS interop streaming (`IJSStreamReference` + `OpenReadStreamAsync`) instead of sending the whole file in a single SignalR interop message
 - Fixes the 32 KB `MaximumReceiveMessageSize` failure on Blazor Server when dropping files

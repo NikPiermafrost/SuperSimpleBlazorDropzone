@@ -7,9 +7,9 @@
 @implements IAsyncDisposable
 
 <div id=@DropperId class=@CssClass @ondragover=@OnDragOver @ondragleave=@OnDragLeave @ondragover:preventDefault
-    @ondragleave:preventDefault @ondrop:preventDefault @onclick=@ForwardFileInputClick tabindex="0">
+    @ondragleave:preventDefault @ondrop:preventDefault tabindex="0">
     @ChildContent
-    <InputFile id=@_fileInputId style="display:none" OnChange=@OnInputFileChange multiple=@AllowMultipleFiles
+    <InputFile id=@_fileInputId style="position:absolute;width:1px;height:1px;opacity:0;overflow:hidden;border:0;padding:0;margin:0" OnChange=@OnInputFileChange multiple=@AllowMultipleFiles
         accept=@AcceptedFileTypesString />
 </div>
 
@@ -39,7 +39,7 @@
             _dropzoneRef = DotNetObjectReference.Create(this);
             _module = await JS.InvokeAsync<IJSObjectReference>("import",
                 "./_content/SuperSimpleBlazorDropzone/SimpleDropzone.razor.js");
-            await _module.InvokeVoidAsync("registerDropHandler", _dropzoneRef, DropperId, AllowMultipleFiles, MaxFileSize, DragActiveCssClass);
+            await _module.InvokeVoidAsync("registerDropHandler", _dropzoneRef, DropperId, AllowMultipleFiles, MaxFileSize, DragActiveCssClass, _fileInputId);
         }
     }
 
@@ -93,11 +93,6 @@
     private async Task OnDragLeave(DragEventArgs e)
     {
         await _module!.InvokeVoidAsync("setDragActive", DropperId, false, DragActiveCssClass);
-    }
-
-    private async Task ForwardFileInputClick()
-    {
-        await _module!.InvokeVoidAsync("clickHiddenFileInput", _fileInputId);
     }
 
     [JSInvokable]

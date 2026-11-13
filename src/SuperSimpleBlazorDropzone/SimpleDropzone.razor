@@ -37,9 +37,20 @@
         if (firstRender)
         {
             _dropzoneRef = DotNetObjectReference.Create(this);
-            _module = await JS.InvokeAsync<IJSObjectReference>("import",
-                "./_content/SuperSimpleBlazorDropzone/SimpleDropzone.razor.js");
-            await _module.InvokeVoidAsync("registerDropHandler", _dropzoneRef, DropperId, AllowMultipleFiles, MaxFileSize, DragActiveCssClass, _fileInputId);
+            // BL0016: JS interop can fail (e.g. circuit disconnect). If the module can't load,
+            // _module stays null and the drag handlers no-op instead of crashing the component.
+            try
+            {
+                _module = await JS.InvokeAsync<IJSObjectReference>("import",
+                    "./_content/SuperSimpleBlazorDropzone/SimpleDropzone.razor.js");
+                await _module.InvokeVoidAsync("registerDropHandler", _dropzoneRef, DropperId, AllowMultipleFiles, MaxFileSize, DragActiveCssClass, _fileInputId);
+            }
+            catch (JSDisconnectedException)
+            {
+            }
+            catch (JSException)
+            {
+            }
         }
     }
 
@@ -87,12 +98,29 @@
 
     private async Task OnDragOver(DragEventArgs e)
     {
-        await _module!.InvokeVoidAsync("setDragActive", DropperId, true, DragActiveCssClass);
+        await SetDragActiveAsync(true);
     }
 
     private async Task OnDragLeave(DragEventArgs e)
     {
-        await _module!.InvokeVoidAsync("setDragActive", DropperId, false, DragActiveCssClass);
+        await SetDragActiveAsync(false);
+    }
+
+    // Shared by drag events and post-drop reset; guarded per BL0016 and null-safe if the module never loaded
+    private async Task SetDragActiveAsync(bool active)
+    {
+        if (_module is null)
+            return;
+        try
+        {
+            await _module.InvokeVoidAsync("setDragActive", DropperId, active, DragActiveCssClass);
+        }
+        catch (JSDisconnectedException)
+        {
+        }
+        catch (JSException)
+        {
+        }
     }
 
     [JSInvokable]
@@ -153,7 +181,7 @@
                 await OnProcessingChanged.InvokeAsync(false);
             }
         }
-        await _module!.InvokeVoidAsync("setDragActive", DropperId, false, DragActiveCssClass);
+        await SetDragActiveAsync(false);
     }
 
     private static RenderFragment DefaultDropContent => builder =>

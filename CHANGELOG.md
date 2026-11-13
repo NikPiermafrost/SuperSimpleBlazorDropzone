@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.1] - 2026-11-13
+- Fixed all new .NET 11 `BL0016` JS-interop analyzer warnings — every JS interop call in `SimpleDropzone` is now guarded (`JSDisconnectedException`/`JSException`), and drag-active/reset calls are null-safe if the JS module fails to load
+- Sample app migrated from deprecated `Microsoft.AspNetCore.Components.WebAssembly.DevServer` to `Microsoft.AspNetCore.Components.Gateway` (SPA fallback enabled, `inspectUri` removed from launch profiles)
+- No API changes; no behavior change on successful interop
+
 ## [2.0.0] - 2026-11-13
 - **BREAKING** Dropped support for .NET 8 and .NET 9; the library now targets .NET 10 and .NET 11 only
 - Added support for .NET 11 (`Microsoft.AspNetCore.Components.Web` 11.0.*)

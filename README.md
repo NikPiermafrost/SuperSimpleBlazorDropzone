@@ -7,7 +7,7 @@ Super Simple Blazor Dropzone is a lightweight and easy-to-use file dropzone comp
 - Simple and intuitive API
 - Lightweight and fast
 - Customizable with CSS classes and content
-- Supports .NET 8, .NET 9 and .NET 10
+- Supports .NET 10 and .NET 11
 - Supports both base64 and binary file transfer
 - JavaScript interop for drag-and-drop and file selection
 - Supports multiple file uploads

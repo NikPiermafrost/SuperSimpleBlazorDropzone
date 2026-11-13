@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.0] - 2026-11-13
+- **BREAKING** Dropped support for .NET 8 and .NET 9; the library now targets .NET 10 and .NET 11 only
+- Added support for .NET 11 (`Microsoft.AspNetCore.Components.Web` 11.0.*)
+- Sample app ported to .NET 11 (Blazor WebAssembly packages 11.0.*)
+
 ## [1.5.0] - 2026-08-04
 - Fixed click-to-select not opening the file picker on Safari for iOS/iPadOS (and any other WebKit-based browser on those platforms)
 - The picker is now opened synchronously from a native JS `click` listener calling `input.click()` directly, instead of routing the click through an async .NET handler and JS interop round trip — WebKit had already discarded the transient user activation by the time the old call landed
